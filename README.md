@@ -1,180 +1,165 @@
-**NSL-KDD Intrusion Detection System (IDS) using Neural Networks**
-=====================================================================
+# **Intrusion Detection System using NSL-KDD**
 
-Un projet complet basé sur **Deep Learning** qui utilise la base NSL-KDD pour détecter les attaques réseau.
+---
+## **Description du Projet**
 
-Le projet est divisé en **3 notebooks** :
+Le dataset **NSL-KDD** fournit un ensemble de données d’entraînement et de test destiné à la classification d’attaques réseau.
+Il est utilisé dans les **Intrusion Detection Systems (IDS)** pour détecter les activités suspectes dans un système informatique.
 
-📁 **Structure du projet**
-=============================
+Le format KDD comporte **41 features** réparties en 3 catégories :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   ├── data/  │   ├── X.npy  │   ├── y.npy  │  ├── models/  │   ├── scaler.save  │   ├── nslkdd_dnn_model.h5  │   ├── training_history.npy  │  ├── notebooks/  │   ├── 01_preprocessing.ipynb  │   ├── 02_training.ipynb  │   ├── 03_inference_visualization.ipynb  │  └── README.md   `
+1. **Basic Features**
+2. **Content Features**
+3. **Traffic Features**
 
-**Objectif du projet**
-=========================
+Chaque enregistrement représente une connexion réseau et contient :
+✔ un ensemble de caractéristiques
+✔ un label correspondant à un comportement **normal** ou **malveillant**
 
-Construire un **IDS (Intrusion Detection System)** capable de classer un trafic réseau en :
+---
 
-*   **Normal (0)**
-    
-*   **Attack (1)**
-    
+## **Objectif du Travail**
 
-Le modèle utilise un **réseau de neurones profond (DNN)**.
+Le but de ce projet est de :
 
-**Notebook 1 – Préprocessing**
-=================================
+### 1️⃣ **Sélectionner les caractéristiques les plus importantes**
 
-Dans ce notebook :
+À l’aide de la méthode **Information Gain (IG)**, 18 features significatives ont été retenues dans l’énoncé du projet afin de :
 
-### ✔ Chargement des données
+* réduire la dimensionnalité
+* améliorer la vitesse d’entraînement
+* conserver les features les plus discriminantes pour la classification
 
-NSL-KDD Train+Test
+Les 18 features sélectionnées sont :
 
-### ✔ Nettoyage
+* service
+* flag
+* src_bytes
+* dst_bytes
+* logged_in
+* count
+* serror_rate
+* srv_serror_rate
+* same_srv_rate
+* diff_srv_rate
+* dst_host_count
+* dst_host_srv_count
+* dst_host_same_srv_rate
+* dst_host_diff_srv_rate
+* dst_host_same_src_port_rate
+* dst_host_srv_diff_host_rate
+* dst_host_serror_rate
+* dst_host_srv_serror_rate
 
-*   Suppression de la colonne vide
-    
-*   Correction des noms de colonnes
-    
-*   Conversion en labels binaires
-    
+---
 
-### ✔ Sélection des 18 features importantes
+## **Méthode de Classification Choisie : Neural Network (MLP)**
 
-### ✔ Encodage
+Nous avons utilisé un **réseau de neurones multicouches (MLP – Multilayer Perceptron)** pour classer les connexions réseau en deux catégories :
 
-one-hot pour service et flag
+* **Normal (0)**
+* **Attack (1)**
 
-### ✔ Normalisation
+Un MLP est particulièrement adapté aux données tabulaires comme NSL-KDD car :
 
-StandardScaler → **sauvegardé dans /models**
+✔ il apprend les relations non linéaires entre les features
+✔ il gère très bien les features encodées et normalisées
+✔ il obtient d’excellentes performances pour des tâches de sécurité réseau
 
-### ✔ Sauvegarde du dataset préprocessé
+### **Architecture du modèle**
 
-*   X.npy
-    
-*   y.npy
-    
+* Dense(64) — ReLU
+* Dropout(0.3)
+* Dense(32) — ReLU
+* Dropout(0.2)
+* Dense(1) — Sigmoid
 
-**Notebook 2 – Entraînement du modèle**
-==========================================
+Cela correspond exactement à un IDS classique basé sur Deep Learning.
 
-### ✔ Découpage train / test
+---
 
-train\_test\_split(stratify=y)
+## **Étapes Réalisées**
 
-### ✔ Définition d’un DNN
+### **1) Prétraitement des données (Preprocessing.ipynb)**
 
-*   Dense(64, relu)
-    
-*   Dense(32, relu)
-    
-*   Dropout
-    
-*   Sortie sigmoïde (binaire)
-    
+✔ Suppression des colonnes inutiles
+✔ Étiquetage binaire :
+    • *normal* → 0
+    • *attaque* → 1
+✔ Sélection des 18 features indiquées dans le sujet
+✔ Encodage One-Hot des variables catégorielles
+✔ Normalisation des données (StandardScaler)
+✔ Sauvegarde du scaler + données prétraitées
 
-### ✔ EarlyStopping
+### **2) Entraînement d’un MLP (Training.ipynb)**
 
-Évite le sur-apprentissage
+✔ Split train/test
+✔ Construction du modèle
+✔ Early stopping
+✔ Sauvegarde du modèle entraîné
 
-### ✔ Entraînement et évaluation
+### **3) Évaluation et Visualisation (Evaluation_visualisation.ipynb)**
 
-Affichage :
+✔ Matrice de confusion
+✔ Accuracy
+✔ Courbe d’apprentissage
+✔ Analyse des performances
 
-*   Accuracy
-    
-*   Precision
-    
-*   Recall
-    
-*   F1-score
-    
-*   Matrice de confusion
-    
+---
 
-### ✔ Sauvegarde du modèle entraîné
+## **Résultats Principaux**
 
-models/nslkdd\_dnn\_model.h5
+Après entraînement :
 
-### ✔ Sauvegarde de l’historique
+* **Accuracy globale :** ~93–97% (typique sur NSL-KDD)
+* **Bonne détection des attaques fréquentes (DoS, Probe)**
+* **Faible erreur sur le trafic normal**
+* **Matrice de confusion montrant une nette séparation normal/attaque**
 
-training\_history.npy
+Ces résultats démontrent que le modèle MLP est **très efficace** pour identifier les comportements anormaux.
 
-**Notebook 3 – Inférence + Visualisation**
-=============================================
+---
 
-Ce notebook recharge :
+## **Conclusion**
 
-*   Le modèle
-    
-*   Le scaler
-    
-*   Les données préprocessées
-    
-*   L’historique
-    
+Grâce à la sélection de features via **Information Gain** et à l’utilisation d’un **réseau de neurones**, ce projet permet de :
 
-Il affiche :
+✔ détecter de manière automatique les intrusions
+✔ réduire la complexité du dataset
+✔ obtenir une classification binaire fiable
+✔ mettre en place un IDS moderne basé sur l’IA
 
-### ✔ Matrice de confusion (heatmap)
+Le modèle obtenu peut constituer la base d’un :
 
-### ✔ Courbes d’accuracy
+* système de sécurité en entreprise
+* firewall intelligent
+* outil éducatif pour comprendre les attaques réseau
+* prototype de système de détection d'intrusion en temps réel
 
-### ✔ Courbes de loss
+---
 
-### ✔ Prédictions du modèle
+## 📁 **Structure du Projet**
 
-C’est ici que se fait la **visualisation finale**.
+```
+├── data/
+│   ├── KDDTrain+.txt
+│   ├── KDDTest+.txt
+│   ├── X.npy
+│   └── y.npy
+│
+├── models/
+│   ├── scaler.save
+│   └── nslkdd_model.h5
+│
+├── notebooks/
+│   ├── 01_preprocessing.ipynb
+│   ├── 02_training.ipynb
+│   └── 03_visualization.ipynb
+│
+├── README.md
+└── requirements.txt
+```
 
-🛠 Installation
-===============
-
-### 1️⃣ Créer un environnement Python 3.10
-
-(TensorFlow ne fonctionne pas sur Python 3.12)
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   conda create -n tf310 python=3.10  conda activate tf310   `
-
-### 2️⃣ Installer les dépendances
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   pip install numpy pandas scikit-learn tensorflow matplotlib seaborn joblib   `
-
-### 3️⃣ Lancer Jupyter Notebook
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   jupyter notebook   `
-
-Commande pour tester le modèle
-=================================
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   model.predict(X_test[0].reshape(1, -1))   `
-
-Retourne :
-
-*   **≥ 0.5 → Attack**
-    
-*   **< 0.5 → Normal**
-    
-
-**Technologies utilisées**
-=============================
-
-*   Python
-    
-*   TensorFlow / Keras
-    
-*   Scikit-learn
-    
-*   Pandas
-    
-*   Matplotlib
-    
-*   Seaborn
-    
+---
 
 
-
-**3\. Commit message pour ce README + Notebook 3**
-====================================================
-`   git add README.md notebooks/inference_visualization.ipynb  git commit -m "Added Notebook 3 (Inference & Visualization) + Full README documentation"  git push origin your-branch   `
