@@ -129,13 +129,6 @@ Grâce à la sélection de features via **Information Gain** et à l’utilisati
 ✔ obtenir une classification binaire fiable
 ✔ mettre en place un IDS moderne basé sur l’IA
 
-Le modèle obtenu peut constituer la base d’un :
-
-* système de sécurité en entreprise
-* firewall intelligent
-* outil éducatif pour comprendre les attaques réseau
-* prototype de système de détection d'intrusion en temps réel
-
 ---
 
 ## 📁 **Structure du Projet**
@@ -149,15 +142,15 @@ Le modèle obtenu peut constituer la base d’un :
 │
 ├── models/
 │   ├── scaler.save
-│   └── nslkdd_model.h5
+│   ├── training_history.npy
+│   └── nslkdd_dnn_model.h5
 │
 ├── notebooks/
-│   ├── 01_preprocessing.ipynb
-│   ├── 02_training.ipynb
-│   └── 03_visualization.ipynb
+│   ├── Preprocessing.ipynb
+│   ├── Training.ipynb
+│   └── Evaluation_visualization.ipynb
 │
-├── README.md
-└── requirements.txt
+└── README.md
 ```
 
 ---
