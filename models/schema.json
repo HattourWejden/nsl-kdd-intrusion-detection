@@ -1,0 +1,12 @@
+{
+  "description": "Feature schema for the NSL-KDD model. Update the 'features' array to match the exact order and names used for training.",
+  "features": [
+    {"name": "duration", "type": "numeric", "description": "length (number of seconds) of the connection"},
+    {"name": "protocol_type", "type": "numeric", "description": "encoded protocol type"},
+    {"name": "service", "type": "numeric", "description": "encoded service"},
+    {"name": "flag", "type": "numeric", "description": "encoded flag"},
+    {"name": "src_bytes", "type": "numeric"},
+    {"name": "dst_bytes", "type": "numeric"}
+  ],
+  "notes": "Ensure you export the full preprocessing pipeline + model so incoming raw features can be transformed consistently. Save pipeline as models/nsl_kdd_model.joblib"
+}
