@@ -209,7 +209,7 @@ Saved:
 6. **Save model and training history**
 
    ```python
-   model.save("models/nslkdd_dnn_model.h5")
+   model.save("models/nslkdd_dnn_model.keras")
    np.save("models/training_history.npy", history.history)
    ```
 
@@ -224,7 +224,7 @@ This notebook:
    ```python
    X = np.load("../data/X.npy")
    y = np.load("../data/y.npy")
-   model = load_model("../models/nslkdd_dnn_model.h5")
+   model = load_model("../models/nslkdd_dnn_model.keras")
    ```
 
 2. **Computes predictions and metrics**
@@ -298,7 +298,7 @@ Objective: **Explain individual model predictions**.
 
    X = np.load("../data/X.npy")
    scaler = joblib.load("../models/scaler.save")
-   model = load_model("../models/nslkdd_dnn_model.h5")
+   model = load_model("../models/nslkdd_dnn_model.keras")
    ```
 
 2. **Configure LIME explainer**
@@ -408,7 +408,7 @@ With **LIME**, you can see which features (e.g., `serror_rate`, `dst_bytes`, `lo
 ├── models/
 │   ├── scaler.save             # StandardScaler
 │   ├── training_history.npy    # training/validation metrics per epoch
-│   └── nslkdd_dnn_model.h5     # trained MLP model
+│   └── nslkdd_dnn_model.keras     # trained MLP model
 │
 ├── notebooks/
 │   ├── Preprocessing.ipynb
@@ -468,7 +468,7 @@ Required main libraries:
 
 2. **Training**
 
-   Run `notebooks/Training.ipynb` to train the MLP and save `nslkdd_dnn_model.h5` and `training_history.npy`.
+   Run `notebooks/Training.ipynb` to train the MLP and save `nslkdd_dnn_model.keras` and `training_history.npy`.
 
 3. **Evaluation**
 
