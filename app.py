@@ -5,6 +5,7 @@ import tensorflow as tf
 import pandas as pd
 import time
 from lime.lime_tabular import LimeTabularExplainer
+import os
 
 # ------------------------------------------------------------------
 # PAGE CONFIGURATION
@@ -25,7 +26,7 @@ body { font-family: 'Segoe UI', sans-serif; background-color:#f5f5f5; }
 .stButton>button { border-radius:10px; font-size:16px; padding:0.6rem 1.2rem; font-weight:600;}
 .predict-btn>button { background-color:#0078ff !important; color:white !important;}
 .reset-btn>button { background-color:#ff5252 !important; color:white !important;}
-.sample-btn>button { background-color:#444 !important; color:white !important; color:white !important;}
+.sample-btn>button { background-color:#444 !important; color:white !important;}
 .pred-normal {background:#0e7b29; padding:18px; border-radius:12px; color:white; font-size:22px; font-weight:bold; text-align:center;}
 .pred-attack {background:#b00020; padding:18px; border-radius:12px; color:white; font-size:22px; font-weight:bold; text-align:center;}
 .progress-bar-container {background-color:#ddd; border-radius:10px; height:30px; margin-top:10px;}
@@ -37,8 +38,9 @@ body { font-family: 'Segoe UI', sans-serif; background-color:#f5f5f5; }
 # LOAD MODEL, SCALER AND COLUMNS
 # ------------------------------------------------------------------
 @st.cache_resource
-def load_model():
-    return tf.keras.models.load_model("models/nslkdd_dnn_model.h5")
+def load_model_cached():
+    # adjust path if you run from a different working directory
+    return tf.keras.models.load_model("models/nslkdd_dnn_model.keras")
 
 @st.cache_resource
 def load_scaler():
@@ -48,9 +50,27 @@ def load_scaler():
 def load_columns():
     return joblib.load("models/columns.save")
 
-model = load_model()
+@st.cache_resource
+def load_background_data(max_samples: int = 2000):
+    """
+    Load a background dataset for LIME.
+    It should be the same space as the model input (scaled features).
+    Here we use X.npy if it exists and optionally subsample it.
+    """
+    data_path = os.path.join("data", "X.npy")
+    if os.path.exists(data_path):
+        X_full = np.load(data_path)
+        if X_full.shape[0] > max_samples:
+            idx = np.random.choice(X_full.shape[0], size=max_samples, replace=False)
+            return X_full[idx]
+        return X_full
+    # Fallback: no background data available
+    return None
+
+model = load_model_cached()
 scaler = load_scaler()
 model_columns = load_columns()
+background_data = load_background_data()
 
 # ------------------------------------------------------------------
 # SIDEBAR — SAMPLE INPUTS
@@ -130,8 +150,11 @@ with col2:
     dst_host_serror_rate = st.number_input("dst_host_serror_rate", min_value=0.0, max_value=1.0, value=form_data["dst_host_serror_rate"])
     dst_host_srv_serror_rate = st.number_input("dst_host_srv_serror_rate", min_value=0.0, max_value=1.0, value=form_data["dst_host_srv_serror_rate"])
 
-service = st.selectbox("Service", ["http", "smtp", "ftp", "dns", "ssh"], index=["http","smtp","ftp","dns","ssh"].index(form_data["service"]))
-flag = st.selectbox("Flag", ["SF", "S0", "REJ", "RSTR", "SH"], index=["SF","S0","REJ","RSTR","SH"].index(form_data["flag"]))
+service_list = ["http", "smtp", "ftp", "dns", "ssh"]
+flag_list = ["SF", "S0", "REJ", "RSTR", "SH"]
+
+service = st.selectbox("Service", service_list, index=service_list.index(form_data["service"]))
+flag = st.selectbox("Flag", flag_list, index=flag_list.index(form_data["flag"]))
 
 # ------------------------------------------------------------------
 # PREDICTION BUTTON
@@ -155,18 +178,33 @@ def preprocess_input():
     }
     X = pd.DataFrame([input_dict])
     X = pd.get_dummies(X, columns=["service", "flag"], drop_first=True)
+
+    # Ensure all model_columns exist
     for col in model_columns:
         if col not in X.columns:
             X[col] = 0
+
     X = X[model_columns]
     X = scaler.transform(X)
     return X
 
 # ------------------------------------------------------------------
+# LIME prediction wrapper
+# ------------------------------------------------------------------
+def lime_predict_fn(x: np.ndarray) -> np.ndarray:
+    """
+    LIME-compatible prediction function.
+    Input: x (n_samples, n_features)
+    Output: probabilities for [Normal, Attack] with shape (n_samples, 2)
+    """
+    p_attack = model.predict(x, verbose=0).reshape(-1)  # (n_samples,)
+    p_attack = np.clip(p_attack, 1e-6, 1 - 1e-6)
+    p_normal = 1.0 - p_attack
+    return np.vstack([p_normal, p_attack]).T
+
+# ------------------------------------------------------------------
 # DISPLAY RESULT
 # ------------------------------------------------------------------
-
-
 if predict_pressed:
     X_processed = preprocess_input()
     pred = model.predict(X_processed)[0][0]
@@ -192,7 +230,7 @@ if predict_pressed:
 
     # Animated confidence bar
     progress_container = st.empty()
-    for i in range(int(confidence)+1):
+    for i in range(int(confidence) + 1):
         progress_container.markdown(
             f"<div class='progress-bar-container'>"
             f"<div class='progress-bar-fill' style='width:{i}%; background-color:{color};'>{i:.0f}%</div></div>",
@@ -205,21 +243,26 @@ if predict_pressed:
     # -----------------------
     st.subheader("📝 Explainable AI: Feature Impact (LIME)")
 
-    # Convert X_processed back to original scaled values for LIME
-    X_scaled = X_processed
     feature_names = model_columns
     class_names = ["Normal", "Attack"]
 
+    # Use a proper background dataset if available, otherwise fall back to the single current point
+    if background_data is not None:
+        training_data_for_lime = background_data
+    else:
+        training_data_for_lime = X_processed  # fallback (less ideal but works)
+
     explainer = LimeTabularExplainer(
-        training_data=np.array(X_scaled),
+        training_data=training_data_for_lime,
         feature_names=feature_names,
         class_names=class_names,
         mode='classification'
     )
 
     explanation = explainer.explain_instance(
-        data_row=X_scaled[0],
-        predict_fn=lambda x: np.hstack([1 - model.predict(x), model.predict(x)])
+        data_row=X_processed[0],
+        predict_fn=lime_predict_fn,
+        num_features=10
     )
 
     # Show top features as a table
