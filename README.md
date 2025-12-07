@@ -503,11 +503,3 @@ LIME may show that the most influential features are:
 - `logged_in = 0`
 
 This suggests that the model considers **frequent SYN errors**, **no successful login**, and **unusual byte patterns** as strong indicators of an attack.
-
----
-
-## 11. References
-
-- NSL-KDD Dataset: [http://www.unb.ca/cic/datasets/nsl.html](http://www.unb.ca/cic/datasets/nsl.html)
-- LIME: Ribeiro et al., “Why Should I Trust You? Explaining the Predictions of Any Classifier”
-- Keras Documentation: [https://keras.io](https://keras.io)
